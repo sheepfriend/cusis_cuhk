@@ -163,7 +163,7 @@ class Section:
 		self.ok=True
 	def refresh(self,soup,tag):
 		title=tag.parent.parent.contents[3].contents[1].contents[3].contents[1].contents[1].contents[1].text
-		if title.find('TUT')!=-1:
+		if title.find('LEC')==-1:
 			ok=False
 			return 
 		lec=Lec()
@@ -175,7 +175,7 @@ class Section:
 			for i in range(0,10):
 				temp=temp.next_sibling
 			title=temp.contents[3].contents[1].contents[3].contents[1].contents[1].contents[1].text
-			if title.find('TUT')!=-1:
+			if title.find('LEC')==-1:
 				tuto=Tuto()
 				tuto.refresh(soup,temp.contents[3].contents[1])
 				self.tuto.append(tuto)
@@ -229,7 +229,6 @@ class Course:
 				section.refresh(soup,i)
 				if section.ok==True:
 					self.sections.append(section)
-				print len(self.sections[0].lec[0].times)
 		soup=submit(url_subject,soup,'DERIVED_SAA_CRS_RETURN_PB')
 		return soup
 
@@ -253,7 +252,6 @@ def save(course):
 		record1.append([lec_,tuto_])
 	url="http://127.0.0.1:8888/index.php"
 	records.append(record1)
-	print records
 	opener.open(url,json.dumps(records))
 		
 		
