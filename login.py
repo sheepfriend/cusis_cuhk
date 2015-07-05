@@ -97,14 +97,6 @@ def change_time(time_):
 	return time_[0:5]
 
 class Time:
-	start=''
-	end=''
-	date=''
-	session=[]
-	_start=0
-	_end=0
-	place=''
-	name=''
 	def __init__(self,date,start,end,place,name):#input ('Mo','13:30','14:30','bilibili')
 		sum=0
 		for i in range(0,5):
@@ -129,13 +121,15 @@ class Time:
 		self.end=end
 		self.place=place
 		self.name=name
+		self.session=[]
 		for i in range(int(start[0:2])-7,int(end[0:2])-7):
 			self.session.append(i)
 #	def __call__(self):
 		#print(Date[self.date]+' '+self.start+' to '+self.end+' at '+self.place)
 
 class Class:
-	times=[]
+	def __init__(self):
+		self.times=[]
 	def refresh(self,soup,tag):
 		if not tag.parent.parent.next_sibling:
 			return
@@ -162,11 +156,11 @@ class Lec(Class):
 	
 
 class Section:
-	lec=[]
-	tuto=[]
-	ok=True
 	def __init__(self,term):
 		self.term=term
+		self.lec=[]
+		self.tuto=[]
+		self.ok=True
 	def refresh(self,soup,tag):
 		title=tag.parent.parent.contents[3].contents[1].contents[3].contents[1].contents[1].contents[1].text
 		if title.find('TUT')!=-1:
@@ -185,21 +179,21 @@ class Section:
 				tuto=Tuto()
 				tuto.refresh(soup,temp.contents[3].contents[1])
 				self.tuto.append(tuto)
+			else:
+				return
 	
 	
 class Course:
-	_title=''
-	_code=''
-	_unit=0
-	sections=[]
-	classes=[]
-	_class=False
-	_req=''
-	_description=''
 	def __init__(self,name,codes):
+		self._unit=0
+		self.sections=[]
+		self.classes=[]
+		self._class=False
+		self._req=''
+		self._description=''
 		self._title=name
 		self._code=codes
-		print name
+		print codes
 	def refresh(self,soup):
 		#collecting course info
 		units=soup.select('label[for="DERIVED_CRSECAT_UNITS_RANGE$0"]')[0]
@@ -229,21 +223,42 @@ class Course:
 			if len(b)>0:
 				soup=submit(url_subject,soup,b[0]['name'])
 			classes=soup.select('table[id^="CLASS$"]')
-			print len(classes)
+			#print len(classes)
 			for i in classes:
 				section=Section(sem1)
 				section.refresh(soup,i)
 				if section.ok==True:
 					self.sections.append(section)
-					print section.lec[0]
+				print len(self.sections[0].lec[0].times)
 		soup=submit(url_subject,soup,'DERIVED_SAA_CRS_RETURN_PB')
 		return soup
 
 ##def find_course: use a webpage to find the specific course info and return a course
 
+
+def save(course):
+	records=[course._code.encode('UTF-8'),course._title.encode('UTF-8'),course._unit.encode('UTF-8'),course._req.encode('UTF-8'),course._description.encode('UTF-8')]
+	record1=[]
+	print len(course.sections)
+	for section in course.sections:
+		lec_=[]
+		tuto_=[]
+		for lec in section.lec:
+			for time_ in lec.times:
+				#print [time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')]
+				lec_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
+		for tuto in section.tuto:
+			for time_ in tuto.times:
+				tuto_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
+		record1.append([lec_,tuto_])
+	url="http://127.0.0.1:8888/index.php"
+	records.append(record1)
+	print records
+	opener.open(url,json.dumps(records))
+		
+		
+
 class Subject:
-	name=''
-	courses=[]
 	def refresh(self,soup):
 		input=soup.select('a[title^="View"]')
 		for i in range(0,len(input)):
@@ -254,17 +269,21 @@ class Subject:
 			course=Course(names,codes)
 			soup=course.refresh(soup)
 			##print soup
+			save(course)
 			self.courses.append(course)
 		return soup
 	def __init__(self,name):
+		self.name=''
+		self.courses=[]
 		self.name=name
-		
-		
+
+
+
+
 class Alphabet:
-	name=''
-	subjects=[]
-	courses=[]
 	def __init__(self,name):
+		self.subjects=[]
+		self.courses=[]
 		self.name=name
 	def refresh(self):
 		resp=opener.open(url_subject)
@@ -286,28 +305,11 @@ class Alphabet:
 		
 	
 
-def save(alpha):
-	for subject in alpha.subjects:
-		records=[]
-		for course in subject.courses:
-			for section in course.sections:
-				lec_=[]
-				tuto_=[]
-				for lec in section.lec:
-					for time_ in lec.times:
-						print 
-						lec_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
-				for tuto in section.tuto:
-					for time_ in tuto.times:
-						tuto_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
-					records.append([course._code.encode('UTF-8'),course._title.encode('UTF-8'),course._unit.encode('UTF-8'),course._req.encode('UTF-8'),course._description.encode('UTF-8'),lec_,tuto_])
-			url="http://127.0.0.1:8888/index.php"
-			opener.open(url,json.dumps(records))
 
 login(name,password)
 record=[]
 for i in range(65,91):
-	save(Alphabet(chr(i)).refresh())
+	Alphabet(chr(i)).refresh()
 
 
 
