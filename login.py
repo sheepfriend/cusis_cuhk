@@ -288,18 +288,18 @@ class Alphabet:
 
 def save(alpha):
 	for subject in alpha.subjects:
-			records=[]
-			for course in subject.courses:
-				for section in course.sections:
-					lec_=[]
-					tuto_=[]
-					for lec in section.lec:
-						for time_ in lec.times:
-							print 
-							lec_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
-					for tuto in section.tuto:
-						for time_ in tuto.times:
-							tuto_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
+		records=[]
+		for course in subject.courses:
+			for section in course.sections:
+				lec_=[]
+				tuto_=[]
+				for lec in section.lec:
+					for time_ in lec.times:
+						print 
+						lec_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
+				for tuto in section.tuto:
+					for time_ in tuto.times:
+						tuto_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
 					records.append([course._code.encode('UTF-8'),course._title.encode('UTF-8'),course._unit.encode('UTF-8'),course._req.encode('UTF-8'),course._description.encode('UTF-8'),lec_,tuto_])
 			url="http://127.0.0.1:8888/index.php"
 			opener.open(url,json.dumps(records))
