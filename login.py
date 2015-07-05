@@ -93,7 +93,8 @@ def change_time(time_):
 	time_=time_.encode("utf-8")
 	if time_[1]==':':time_="0"+time_
 	if time_[(len(time_)-2):]=="PM":
-		time_=str(int(time_[0:2])+12)+time_[2:5]
+		if int(time_[0:2])!=12:
+			time_=str(int(time_[0:2])+12)+time_[2:5]
 	return time_[0:5]
 
 class Time:
