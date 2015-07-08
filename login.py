@@ -114,29 +114,36 @@ class Time:
 			self.end='TBA'
 			self.place=place
 			self.name=name
+			self.session=""
 			return
-		self._start=sum+int(start[0:2])*60+int(start[3:5])
-		self._end=sum+int(end[0:2]*60)+int(end[3:5])
-		self.start=start
-		self.date=date
-		self.end=end
-		self.place=place
-		self.name=name
-		self.session=[]
-		for i in range(int(start[0:2])-7,int(end[0:2])-7):
-			self.session.append(i)
+		else:
+			self._start=sum+int(start[0:2])*60+int(start[3:5])
+			self._end=sum+int(end[0:2]*60)+int(end[3:5])
+			self.start=start
+			self.date=date
+			self.end=end
+			self.place=place
+			self.name=name
+			self.session=[]
+			for i in range(int(start[0:2])-7,int(end[0:2])-7):
+				temp=date.encode('UTF-8')+'_'+str(i-1)
+				self.session.append(temp)
+			self.session='#'.join(self.session)
 #	def __call__(self):
 		#print(Date[self.date]+' '+self.start+' to '+self.end+' at '+self.place)
 
 class Class:
 	def __init__(self):
 		self.times=[]
-	def refresh(self,soup,tag):
+		self.title=""
+	def refresh(self,soup,tag,title):
+		self.title=title
 		if not tag.parent.parent.next_sibling:
 			return
 		temp=tag.parent.parent.next_sibling.next_sibling.next_sibling.next_sibling
 		###print temp.contents
 		temp=temp.contents[3].contents[1].contents
+		print temp
 		for i in range(1,len(temp)):
 			if i!=1 and i%2!=0:
 				content=temp[i].contents
@@ -168,7 +175,7 @@ class Section:
 			ok=False
 			return 
 		lec=Lec()
-		lec.refresh(soup,tag)
+		lec.refresh(soup,tag,title)
 		self.lec.append(lec)
 		temp=tag.parent.parent
 		#not the last tag
@@ -178,7 +185,8 @@ class Section:
 			title=temp.contents[3].contents[1].contents[3].contents[1].contents[1].contents[1].text
 			if title.find('LEC')==-1:
 				tuto=Tuto()
-				tuto.refresh(soup,temp.contents[3].contents[1])
+				print title
+				tuto.refresh(soup,temp.contents[3].contents[1],title)
 				self.tuto.append(tuto)
 			else:
 				return
@@ -244,16 +252,18 @@ def save(course):
 		lec_=[]
 		tuto_=[]
 		for lec in section.lec:
+			time__=[]
 			for time_ in lec.times:
+				time__.append(time_.session)
 				#print [time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')]
-				lec_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
+			lec_.append([lec.title,time_.place.encode('UTF-8'),'#'.join(time__),time_.name.encode('UTF-8')])
 		for tuto in section.tuto:
 			for time_ in tuto.times:
-				tuto_.append([time_.date.encode('UTF-8'),time_.start,time_.end,time_.place.encode('UTF-8'),time_.name.encode('UTF-8')])
+				tuto_.append([tuto.title,time_.place.encode('UTF-8'),time_.session,time_.name.encode('UTF-8')])
 		record1.append([lec_,tuto_])
 	url="http://127.0.0.1:8888/index.php"
 	records.append(record1)
-	opener.open(url,json.dumps(records))
+	print opener.open(url,json.dumps(records).replace('\n',' ')).read()
 		
 		
 
@@ -289,7 +299,7 @@ class Alphabet:
 		soup=BeautifulSoup(resp)
 		soup=submit(url_subject,soup,'DERIVED_SSS_BCC_SSR_ALPHANUM_'+self.name)
 		a=soup.select('a[title^="Show/Hide"]')
-		for i in range(0,len(a)):
+		for i in range(13,len(a)):
 			if i>0:
 				soup=submit(url_subject,soup,a[i-1]['name'])
 				soup=submit(url_subject,soup,a[i-1]['name'])
@@ -307,8 +317,8 @@ class Alphabet:
 
 login(name,password)
 record=[]
-for i in range(65,91):
-	Alphabet(chr(i)).refresh()
+#for i in range(66,86):
+Alphabet('S').refresh()
 
 
 

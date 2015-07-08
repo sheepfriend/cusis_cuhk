@@ -64,22 +64,21 @@
 	function add_section($content){
 		$conn=connect();
 		$tname=substr($content[0],0,4);
-		check_table($tname);
-		$num=select_max($tname)+1;
+		//check_table($tname);
 		for($i=0;$i<count($content[5]);$i++){
 			for($j=0;$j<count($content[5][$i][0]);$j++){
 				if($content[5][$i][0][$j][0]==''){break;}
-				insert($tname,array('code','type_','date','start','end','place','people','group_','subgroup'),array(array($content[0],'LEC',$content[5][$i][0][$j][0],$content[5][$i][0][$j][1],$content[5][$i][0][$j][2],$content[5][$i][0][$j][3],$content[5][$i][0][$j][4],$i,$j)));
+				insert('schedule',array('code','subcode','place','session','person'),array(array($content[0],$content[5][$i][0][$j][0],$content[5][$i][0][$j][1],$content[5][$i][0][$j][2],$content[5][$i][0][$j][3])));
 			}
 			for($j=0;$j<count($content[5][$i][1]);$j++){
 				if($content[5][$i][1][$j][0]==''){break;}
-				insert($tname,array('code','type_','date','start','end','place','people','group_','subgroup'),array(array($content[0],'TUT',$content[5][$i][1][$j][0],$content[5][$i][1][$j][1],$content[5][$i][1][$j][2],$content[5][$i][1][$j][3],$content[5][$i][1][$j][4],$i,$j)));
+				insert('schedule',array('code','subcode','place','session','person'),array(array($content[0],$content[5][$i][1][$j][0],$content[5][$i][1][$j][1],$content[5][$i][1][$j][2],$content[5][$i][1][$j][3])));
 			}
 			$num++;
 		}
 	}
 	if($_SERVER["REQUEST_METHOD"]=="POST"){
-		$file = fopen("data/".time().".txt","w+");
+		//$file = fopen("data/".time().".txt","w+");
 		$temp1=file_get_contents('php://input');
 		$temp=json_decode($temp1, true);
 		add_course($temp);
