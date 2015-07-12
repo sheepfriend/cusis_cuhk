@@ -28,7 +28,7 @@ opener=urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 header=[('User-Agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.124 Safari/537.36')]
 opener.addheaders=header
 
-sem1='1835'
+sem1='1890'
 sem2='1845'
 course_table='CLASS$scroll$'
 
@@ -62,6 +62,20 @@ def submit_(url,soup,typ,data):
 			data.append((i['name'],i['value']))
 		##print(i['name']+": "+i['value'])
 	return BeautifulSoup(opener.open(url,urllib.urlencode(data)).read())
+
+def submit_sem(url,soup,typ):
+	input=soup.select('input')
+	data=[]
+	for i in input:
+		if i['name']=="ICAction":
+			data.append((i['name'],typ))
+		elif i['name']=='DERIVED_SAA_CRS_TERM_ALT':
+			data.append((i['name'],sem1))
+		else:
+			data.append((i['name'],i['value']))
+		##print(i['name']+": "+i['value'])
+	return BeautifulSoup(opener.open(url,urllib.urlencode(data)).read())
+
 
 def login(name,password):
 	opener.open(url_2)
@@ -143,17 +157,18 @@ class Class:
 		temp=tag.parent.parent.next_sibling.next_sibling.next_sibling.next_sibling
 		###print temp.contents
 		temp=temp.contents[3].contents[1].contents
-		print temp
+		#print temp
 		for i in range(1,len(temp)):
 			if i!=1 and i%2!=0:
 				content=temp[i].contents
-				date=content[1].contents[1].text
-				start=content[3].contents[1].text
-				end=content[5].contents[1].text
-				place=content[7].contents[1].text
-				name=content[9].contents[1].text
-				_time=Time(date,start,end,place,name)
-				self.times.append(_time)
+				if len(content)>=10:
+					date=content[1].contents[1].text
+					start=content[3].contents[1].text
+					end=content[5].contents[1].text
+					place=content[7].contents[1].text
+					name=content[9].contents[1].text
+					_time=Time(date,start,end,place,name)
+					self.times.append(_time)
 
 
 class Tuto(Class):
@@ -202,7 +217,7 @@ class Course:
 		self._description=''
 		self._title=name
 		self._code=codes
-		print codes
+		#print codes
 	def refresh(self,soup):
 		#collecting course info
 		units=soup.select('label[for="DERIVED_CRSECAT_UNITS_RANGE$0"]')[0]
@@ -219,7 +234,8 @@ class Course:
 		a=soup.select('a[name="DERIVED_SAA_CRS_SSR_PB_GO"]')
 		if(len(a)==0):
 			return submit(url_subject,soup,'DERIVED_SAA_CRS_RETURN_PB')
-		soup=submit(url_subject,soup,'DERIVED_SAA_CRS_SSR_PB_GO')
+		a=soup.select('a[name^="DERIVED_SAA_CRS_SSR_PB_GO"]')[0]
+		soup=submit_sem(url_subject,soup,'DERIVED_SAA_CRS_SSR_PB_GO')
 		a=soup.select('a[title^="View"]')[0]
 		#check first sem
 		first=soup.select('option[selected="selected"]')[1]
@@ -247,7 +263,7 @@ class Course:
 def save(course):
 	records=[course._code.encode('UTF-8'),course._title.encode('UTF-8'),course._unit.encode('UTF-8'),course._req.encode('UTF-8'),course._description.encode('UTF-8')]
 	record1=[]
-	print len(course.sections)
+	#print len(course.sections)
 	for section in course.sections:
 		lec_=[]
 		tuto_=[]
@@ -263,7 +279,7 @@ def save(course):
 		record1.append([lec_,tuto_])
 	url="http://127.0.0.1:8888/index.php"
 	records.append(record1)
-	print opener.open(url,json.dumps(records).replace('\n',' ')).read()
+	opener.open(url,json.dumps(records).replace('\n',' '))
 		
 		
 
@@ -274,6 +290,7 @@ class Subject:
 			soup=submit(url_subject,soup,input[i]['name'])
 			name=soup.select('span[class="PALEVEL0SECONDARY"]')[0]
 			codes=name.text[0:4]+name.text[5:9]
+			print codes
 			names=name.text[12:]
 			course=Course(names,codes)
 			soup=course.refresh(soup)
@@ -299,13 +316,12 @@ class Alphabet:
 		soup=BeautifulSoup(resp)
 		soup=submit(url_subject,soup,'DERIVED_SSS_BCC_SSR_ALPHANUM_'+self.name)
 		a=soup.select('a[title^="Show/Hide"]')
-		for i in range(13,len(a)):
+		for i in range(3,4):
 			if i>0:
 				soup=submit(url_subject,soup,a[i-1]['name'])
 				soup=submit(url_subject,soup,a[i-1]['name'])
 			soup=submit(url_subject,soup,a[i]['name'])
 			##print soup
-			#print a[i].text
 			subject=Subject(a[i].text)
 			subject.refresh(soup)
 			self.subjects.append(subject)
@@ -317,8 +333,9 @@ class Alphabet:
 
 login(name,password)
 record=[]
-#for i in range(66,86):
-Alphabet('S').refresh()
+Alphabet('M').refresh()
+for i in range(72,91):
+	Alphabet(chr(i)).refresh()
 
 
 
